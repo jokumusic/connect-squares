@@ -7,13 +7,14 @@ import chaiAsPromised from 'chai-as-promised';
 import { expect } from 'chai';
 
 
-async function play(program: Program<TicTacToe>, game, player, tile, expectedMoves, expectedCurrentPlayerIndex, expectedGameState, expectedBoard) {
+async function play(program: Program<TicTacToe>, game, pot, player, tile, expectedMoves, expectedCurrentPlayerIndex, expectedGameState, expectedBoard) {
   console.log('marking tile: ', tile);
   const tx = await program.methods
     .gamePlay(tile)
     .accounts({
       player: player.publicKey,
-      game
+      game,
+      pot
     })
     .transaction();
 
@@ -145,6 +146,7 @@ describe('tic-tac-toe', () => {
     const tx = await play(
       program,
       gamePda,
+      potPda,
       playerOne,
       {row: 0, column: 0},
       1,
@@ -161,6 +163,7 @@ describe('tic-tac-toe', () => {
       await play(
         program,
         gamePda,
+        potPda,
         playerOne, // same player in subsequent turns
         // change sth about the tx because
         // duplicate tx that come in too fast
@@ -188,6 +191,7 @@ describe('tic-tac-toe', () => {
     await play(
       program,
       gamePda,
+      potPda,
       playerTwo,
       {row: 1, column: 0},
       2,
@@ -203,6 +207,7 @@ describe('tic-tac-toe', () => {
     await play(
       program,
       gamePda,
+      potPda,
       playerOne,
       {row: 0, column: 1},
       3,
@@ -219,6 +224,7 @@ describe('tic-tac-toe', () => {
       await play(
         program,
         gamePda,
+        potPda,
         playerTwo,
         {row: 5, column: 1}, // out of bounds row
         3,
@@ -241,6 +247,7 @@ describe('tic-tac-toe', () => {
     await play(
       program,
       gamePda,
+      potPda,
       playerTwo,
       {row: 1, column: 1},
       4,
@@ -257,6 +264,7 @@ describe('tic-tac-toe', () => {
       await play(
         program,
         gamePda,
+        potPda,
         playerOne,
         {row: 1, column: 1},
         4,
@@ -279,6 +287,7 @@ describe('tic-tac-toe', () => {
     await play(
       program,
       gamePda,
+      potPda,
       playerOne,
       {row: 0, column: 2},
       5,
@@ -295,6 +304,7 @@ describe('tic-tac-toe', () => {
       await play(
         program,
         gamePda,
+        potPda,
         playerOne,
         {row: 0, column: 2},
         5,

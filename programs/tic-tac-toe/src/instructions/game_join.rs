@@ -11,8 +11,8 @@ pub fn game_join_handler(ctx: Context<GameJoin>) -> Result<()> {
 pub struct GameJoin<'info> {
     #[account(
         mut,
-        seeds = [b"game", game.creator.as_ref()],
-        bump = game.bump
+        seeds = [b"game", game.get_creator().as_ref()],
+        bump = game.get_bump()
     )]
     pub game: Account<'info, Game>,
 

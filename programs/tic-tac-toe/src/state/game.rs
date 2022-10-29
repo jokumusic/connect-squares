@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use crate::errors::GameError;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Copy)]
 pub enum GameState {
     Waiting,
     Active,
@@ -17,22 +17,22 @@ pub struct Tile {
 
 #[account]
 pub struct Game {
-    pub bump: u8, //1;
-    pub creator: Pubkey, //32;
-    pub state: GameState, //1+32
-    pub rows: u8, //1;
-    pub cols: u8, //1;
-    pub min_players: u8, //1;
-    pub max_players: u8, //1;
-    pub moves: u8, //1;
-    pub wager: u32, //4;
-    pub pot: Pubkey, //32;
-    pub init_timestamp: i64, //8;
-    pub last_move_slot: u64, //8;
-    pub joined_players: u8, //1;
-    pub current_player_index: u8, //1;
-    pub board: Vec<Vec<Option<u8>>>, //dynamic;
-    pub players: Vec<Pubkey>, //dynamic;
+    bump: u8, //1;
+    creator: Pubkey, //32;
+    state: GameState, //1+32
+    rows: u8, //1;
+    cols: u8, //1;
+    min_players: u8, //1;
+    max_players: u8, //1;
+    moves: u8, //1;
+    wager: u32, //4;
+    pot: Pubkey, //32;
+    init_timestamp: i64, //8;
+    last_move_slot: u64, //8;
+    joined_players: u8, //1;
+    current_player_index: u8, //1;
+    board: Vec<Vec<Option<u8>>>, //dynamic;
+    players: Vec<Pubkey>, //dynamic;
 }
 
 impl Game {
@@ -111,6 +111,18 @@ impl Game {
         Ok(())
     }
 
+    pub fn get_bump(&self) -> u8 {
+        self.bump
+    }
+
+    pub fn get_creator(&self)-> Pubkey {
+        self.creator
+    }
+
+    pub fn get_state(&self) -> GameState {
+        self.state
+    }
+
     pub fn is_active(&self) -> bool {
         self.state == GameState::Active
     }
@@ -118,9 +130,6 @@ impl Game {
     pub fn current_player(&self) -> Pubkey {
         self.players[self.current_player_index as usize]
     }
-
-  
-
 
     fn row_all_equal(&self, row: usize) -> bool {
         if let Some(first) = self.board[row][0] {

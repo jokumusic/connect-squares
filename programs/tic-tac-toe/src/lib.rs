@@ -7,6 +7,7 @@ pub mod state;
 use crate::state::Tile;
 
 pub mod errors;
+pub mod utils;
 
 
 // this key needs to be changed to whatever public key is returned by "anchor keys list"
