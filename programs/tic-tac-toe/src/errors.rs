@@ -1,10 +1,11 @@
 use anchor_lang::error_code;
 
 #[error_code]
-pub enum TicTacToeError {
+pub enum GameError {
     TileOutOfBounds,
     TileAlreadySet,
     GameAlreadyOver,
     NotPlayersTurn,
     GameAlreadyStarted,
+    NotAcceptingPlayers,
 }

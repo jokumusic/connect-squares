@@ -1,5 +1,8 @@
-pub use play::*;
-pub use setup_game::*;
+pub mod game_init;
+pub mod game_join;
+pub mod game_play;
 
-pub mod play;
-pub mod setup_game;
+
+pub use game_init::*;
+pub use game_join::*;
+pub use game_play::*;

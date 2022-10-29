@@ -1,10 +1,13 @@
 use anchor_lang::prelude::*;
+
+pub mod instructions;
 use instructions::*;
-use state::game::Tile;
+
+pub mod state;
+use crate::state::Tile;
 
 pub mod errors;
-pub mod instructions;
-pub mod state;
+
 
 // this key needs to be changed to whatever public key is returned by "anchor keys list"
 declare_id!("H5k95qzHVCoKJSDCE5WLJ9kcmfSWn89sw4gWkjGY76DB");
@@ -13,11 +16,15 @@ declare_id!("H5k95qzHVCoKJSDCE5WLJ9kcmfSWn89sw4gWkjGY76DB");
 pub mod tic_tac_toe {
     use super::*;
 
-    pub fn setup_game(ctx: Context<SetupGame>, player_two: Pubkey) -> Result<()> {
-        instructions::setup_game::setup_game(ctx, player_two)
+    pub fn game_init(ctx: Context<GameInit>, rows: u8, cols: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
+        instructions::game_init_handler(ctx, rows, cols, min_players, max_players, wager)
     }
 
-    pub fn play(ctx: Context<Play>, tile: Tile) -> Result<()> {
-        instructions::play::play(ctx, tile)
+    pub fn game_join(ctx: Context<GameJoin>) -> Result<()> {
+        instructions::game_join_handler(ctx)
+    }
+
+    pub fn game_play(ctx: Context<GamePlay>, tile: Tile) -> Result<()> {
+        instructions::game_play_handler(ctx, tile)
     }
 }
