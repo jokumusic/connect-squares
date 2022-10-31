@@ -4,12 +4,13 @@ use crate::state::{game::*, Pot};
 
 
 pub fn game_init_handler(ctx: Context<GameInit>, rows: u8, cols: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
+
+    let pot = &mut ctx.accounts.pot;
+    let pot_bump = *ctx.bumps.get("pot").unwrap();
+    pot.init(pot_bump, ctx.accounts.game.key())?;
+
     let bump = *ctx.bumps.get("game").unwrap();
     let creator_key = ctx.accounts.creator.key();
-    let pot = &mut ctx.accounts.pot;
-
-    pot.init(bump, ctx.accounts.game.key())?;
-    
     ctx.accounts.game.init(bump, creator_key, pot.key(), rows, cols, min_players, max_players, wager)
 }
 
