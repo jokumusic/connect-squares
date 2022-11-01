@@ -100,7 +100,7 @@ impl Game {
         }
         
 
-        if self.row_all_equal(tile.row as usize) || self.col_all_equal(tile.column as usize) {
+        if self.row_all_equal(tile.row as usize) || self.col_all_equal(tile.column as usize) || self.diagonal_all_equal() {
             self.state = GameState::Won {
                 winner: self.current_player(),
             };
@@ -164,6 +164,47 @@ impl Game {
         }        
 
         true
+    }
+
+    fn diagonal_all_equal(&self) -> bool {
+        if self.rows != self.cols {
+            return false;
+        }
+
+        let mut rejected = false;
+
+        if self.board[0][0].is_some() {
+            for i in 1..self.board.len(){
+                let current_cell_player = self.board[i][i];
+                if current_cell_player.is_none() || current_cell_player != self.board[i-1][i-1] {
+                    rejected = true;
+                    break;
+                }
+            }
+
+            if !rejected {
+                return true;
+            }
+        }
+
+        let mut current_row = self.board.len() - 1;
+        
+        if self.board[current_row][0].is_some() {            
+            for col in 1..self.board[0].len() {
+                current_row -= 1;
+                let current_cell_player = self.board[current_row][col];
+                if current_cell_player.is_none() || current_cell_player != self.board[current_row+1][col-1] {
+                    rejected = true;
+                    break;
+                }
+            }
+
+            if !rejected {
+                return true;
+            }
+        }
+
+        false
     }
 
 }
