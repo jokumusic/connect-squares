@@ -36,10 +36,12 @@ describe('tic-tac-toe', () => {
   const provider = program.provider as anchor.AnchorProvider;
   const playerOne = anchor.web3.Keypair.generate();
   const playerTwo = anchor.web3.Keypair.generate();
+  const gameNonce = Math.floor((Math.random() * Math.pow(2,32)));
   const [gamePda, gamePdaBump] = PublicKey.findProgramAddressSync(
     [
       anchor.utils.bytes.utf8.encode("game"),
-      playerOne.publicKey.toBuffer()
+      playerOne.publicKey.toBuffer(),
+      new anchor.BN(gameNonce).toArrayLike(Buffer, 'be', 4),
     ], program.programId);
   const [potPda, potPdaBump] = anchor.web3.PublicKey.findProgramAddressSync(
     [
@@ -92,7 +94,7 @@ describe('tic-tac-toe', () => {
     const wager = .001;
 
     const tx = await program.methods
-      .gameInit(rows,cols, minPlayers,maxPlayers, wager)
+      .gameInit(gameNonce,rows,cols, minPlayers,maxPlayers, wager)
       .accounts({
         creator: playerOne.publicKey,
         game: gamePda,

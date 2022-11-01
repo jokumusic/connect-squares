@@ -20,4 +20,17 @@ pub enum GameError {
     PayoutCreditNumericalOverflow,
     #[msg("player and winner don't match")]
     PlayerWinnerMismatch,
+    #[msg("rows must be greater than 2")]
+    RowsMustBeGreaterThanTwo,
+    #[msg("colums must be greater than 2")]
+    ColumnsMustBeGreaterThanTwo,
+    #[msg("minimum players must be greater than 1")]
+    MinimumPlayersMustBeGreaterThanOne,
+    #[msg("maximum players must be greater than 1")]
+    MaximumPlayersMustBeGreaterThanOne,
+    #[msg("maximum players must be greater than or equal to minimum players")]
+    MaximumPlayersMustBeGreaterThanOrEqualToMiniumPlayers,
+
+
+
 }

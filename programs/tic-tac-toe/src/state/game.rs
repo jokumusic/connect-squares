@@ -19,6 +19,7 @@ pub struct Tile {
 pub struct Game {
     bump: u8, //1;
     creator: Pubkey, //32;
+    nonce: u32, //4;
     state: GameState, //1+32
     rows: u8, //1;
     cols: u8, //1;
@@ -36,11 +37,18 @@ pub struct Game {
 }
 
 impl Game {
-    pub const SIZE: usize = 1 + 32 + (1+32) + 1 + 1 + 1 + 1 + 1 + 4 + 32 + 8 + 8 + 1 + 1;
+    pub const SIZE: usize = 1 + 32 + 4 + (1+32) + 1 + 1 + 1 + 1 + 1 + 4 + 32 + 8 + 8 + 1 + 1;
 
-    pub fn init(&mut self, bump: u8, creator: Pubkey, pot:Pubkey, rows: u8, cols: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
+    pub fn init(&mut self, bump: u8, creator: Pubkey, nonce: u32, pot:Pubkey, rows: u8, cols: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
+        require!(rows > 2, GameError::RowsMustBeGreaterThanTwo);
+        require!(cols > 2, GameError::ColumnsMustBeGreaterThanTwo);
+        require!(min_players > 1, GameError::MinimumPlayersMustBeGreaterThanOne);
+        require!(max_players > 1, GameError::MaximumPlayersMustBeGreaterThanOne);
+        require!(max_players >= min_players, GameError::MaximumPlayersMustBeGreaterThanOrEqualToMiniumPlayers);
+
         self.bump = bump;
         self.creator = creator;
+        self.nonce = nonce;
         self.state = GameState::Waiting;
         self.rows = rows;
         self.cols = cols;
@@ -117,6 +125,10 @@ impl Game {
 
     pub fn get_creator(&self)-> Pubkey {
         self.creator
+    }
+
+    pub fn get_nonce(&self)-> u32 {
+        self.nonce
     }
 
     pub fn get_state(&self) -> GameState {

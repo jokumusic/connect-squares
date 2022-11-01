@@ -34,7 +34,7 @@ pub fn game_play_handler(ctx: Context<GamePlay>, tile: Tile) -> Result<()> {
 pub struct GamePlay<'info> {
     #[account(
         mut,
-        seeds = [b"game", game.get_creator().as_ref()],
+        seeds = [b"game", game.get_creator().as_ref(), &game.get_nonce().to_be_bytes()],
         bump = game.get_bump(),
     )]
     pub game: Account<'info, Game>,
