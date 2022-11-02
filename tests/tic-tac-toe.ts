@@ -116,6 +116,7 @@ async function joinGame(program: Program<TicTacToe>, player: Keypair, params: Jo
 }
 
 async function play(program: Program<TicTacToe>, player: Keypair,  playParams: PlayParameters, expected: ExpectedPlayResult) {
+  
   console.log('marking tile: ', playParams.tile);
 
   const tx = await program.methods
@@ -132,7 +133,8 @@ async function play(program: Program<TicTacToe>, player: Keypair,  playParams: P
         .confirmTransaction(txSignature,'finalized');
   
   const game = await program.account.game.fetch(playParams.gamePda);
-  expect(game.moves).to.equal(expected.moves);
+  //console.log(`game.currentPlayerIndex: ${game.currentPlayerIndex}, expected playerIndex: ${expected.playerIndex}, game.state: `, game.state);
+  expect(game.moves).to.equal(expected.moves);  
   expect(game.currentPlayerIndex).to.equal(expected.playerIndex);
   expect(game.state).to.eql(expected.state);
   expect(game.board).to.eql(expected.board);
@@ -186,6 +188,7 @@ describe('tic-tac-toe', () => {
     });
   });
 
+  
   it('setup game!', async() => {
     const rows = 3;
     const cols = 3;
@@ -364,7 +367,7 @@ describe('tic-tac-toe', () => {
 
     await play(program, players[playerIndex],
       { gamePda: gamePda, potPda: potPda, tile: {row: 0, column: 2}},
-      { moves: ++moves, playerIndex: playerIndex, state: { won: { winner: playerOne.publicKey }, }, 
+      { moves: ++moves, playerIndex: playerIndex, state: { won: { winner: players[playerIndex].publicKey }, }, 
         board: [
           [0,0,0],
           [1,1,null],
@@ -377,7 +380,7 @@ describe('tic-tac-toe', () => {
     try {
       await play(program, players[playerIndex],
         { gamePda: gamePda, potPda: potPda, tile: {row: 0, column: 2}}, //should throw an error that the game has already been won
-        { moves: moves, playerIndex: playerIndex, state: { won: { winner: playerOne.publicKey }, }, 
+        { moves: moves, playerIndex: playerIndex, state: { won: { winner: players[playerIndex].publicKey }, }, 
           board: [
             [0,0,0],
             [1,1,null],
@@ -385,13 +388,258 @@ describe('tic-tac-toe', () => {
           ]
         }    
       );
-
       
       chai.assert(false, "should've failed but didn't ");
     } catch (_err) {
     }
     
   });
-  
+
+  it('vertical win!', async () => {
+    const rows = 3;
+    const cols = 3;
+    const minPlayers = 2;
+    const maxPlayers = 2;
+    let moves = 0;
+    let playerIndex = 0;
+    const players = [playerOne, playerTwo];
+
+    const [gamePda, gamePdaBump, gameNonce] = await getGamePda(program, playerOne.publicKey);
+    const [potPda, potPdaBump] = await getPotPda(program.programId, gamePda);
+
+    const initGameConfirmation = await initGame(program, playerOne, {
+      gameNonce,
+      gamePda: gamePda,
+      potPda: potPda,
+      cols: cols,
+      rows,
+      minPlayers,
+      maxPlayers,
+      wager,
+    });
+
+    const joinGameConfirmation = await joinGame(program, playerTwo, { gamePda, potPda}); 
+
+    await play(program, players[playerIndex],
+        { gamePda: gamePda, potPda: potPda, tile: {row: 0, column: 0}},
+        { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+          board: [
+            [0,null,null],
+            [null,null,null],
+            [null,null,null]
+          ]
+        }    
+    );    
+    
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 0, column: 1}},
+      { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+        board: [
+          [0,1,null],
+          [null,null,null],
+          [null,null,null]
+        ]
+      }    
+    );
+
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 1, column: 0}},
+      { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+        board: [
+          [0,1,null],
+          [0,null,null],
+          [null,null,null]
+        ]
+      }    
+    );
+   
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 1, column: 1}},
+      { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+        board: [
+          [0,1,null],
+          [0,1,null],
+          [null,null,null]
+        ]
+      }    
+    );
+
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 2, column:0}},
+      { moves: ++moves, playerIndex: playerIndex, state: { won: { winner: players[playerIndex].publicKey }, }, 
+        board: [
+          [0,1,null],
+          [0,1,null],
+          [0,null,null]
+        ]
+      }    
+    );
+ 
+  });
+
+  it('positive slope win!', async () => {
+    const rows = 3;
+    const cols = 3;
+    const minPlayers = 2;
+    const maxPlayers = 2;
+    let moves = 0;
+    let playerIndex = 0;
+    const players = [playerOne, playerTwo];
+
+    const [gamePda, gamePdaBump, gameNonce] = await getGamePda(program, playerOne.publicKey);
+    const [potPda, potPdaBump] = await getPotPda(program.programId, gamePda);
+
+    const initGameConfirmation = await initGame(program, playerOne, {
+      gameNonce,
+      gamePda: gamePda,
+      potPda: potPda,
+      cols: cols,
+      rows,
+      minPlayers,
+      maxPlayers,
+      wager,
+    });
+
+    const joinGameConfirmation = await joinGame(program, playerTwo, { gamePda, potPda}); 
+
+    await play(program, players[playerIndex],
+        { gamePda: gamePda, potPda: potPda, tile: {row: 2, column: 0}},
+        { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+          board: [
+            [null,null,null],
+            [null,null,null],
+            [0,null,null]
+          ]
+        }    
+    );    
+    
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 2, column: 1}},
+      { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+        board: [
+          [null,null,null],
+          [null,null,null],
+          [0,1,null]
+        ]
+      }    
+    );
+
+
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 1, column: 1}},
+      { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+        board: [
+          [null,null,null],
+          [null,0,null],
+          [0,1,null]
+        ]
+      }    
+    );
+
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 1, column: 0}},
+      { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+        board: [
+          [null,null,null],
+          [1,0,null],
+          [0,1,null]
+        ]
+      }    
+    ); 
+
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 0, column:2}},
+      { moves: ++moves, playerIndex: playerIndex, state: { won: { winner: players[playerIndex].publicKey }, }, 
+        board: [
+          [null,null,0],
+          [1,0,null],
+          [0,1,null]
+        ]
+      }    
+    );
+
+  });
+
+  it('negative slope win!', async () => {
+    const rows = 3;
+    const cols = 3;
+    const minPlayers = 2;
+    const maxPlayers = 2;
+    let moves = 0;
+    let playerIndex = 0;
+    const players = [playerOne, playerTwo];
+
+    const [gamePda, gamePdaBump, gameNonce] = await getGamePda(program, playerOne.publicKey);
+    const [potPda, potPdaBump] = await getPotPda(program.programId, gamePda);
+
+    const initGameConfirmation = await initGame(program, playerOne, {
+      gameNonce,
+      gamePda: gamePda,
+      potPda: potPda,
+      cols: cols,
+      rows,
+      minPlayers,
+      maxPlayers,
+      wager,
+    });
+
+    const joinGameConfirmation = await joinGame(program, playerTwo, { gamePda, potPda}); 
+
+    await play(program, players[playerIndex],
+        { gamePda: gamePda, potPda: potPda, tile: {row: 0, column: 0}},
+        { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+          board: [
+            [0,null,null],
+            [null,null,null],
+            [null,null,null]
+          ]
+        }    
+    );    
+    
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 0, column: 1}},
+      { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+        board: [
+          [0,1,null],
+          [null,null,null],
+          [null,null,null]
+        ]
+      }    
+    );
+
+ 
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 1, column: 1}},
+      { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+        board: [
+          [0,1,null],
+          [null,0,null],
+          [null,null,null]
+        ]
+      }    
+    );
+
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 1, column: 0}},
+      { moves: ++moves, playerIndex: playerIndex ? --playerIndex : ++playerIndex, state: GameState.active, 
+        board: [
+          [0,1,null],
+          [1,0,null],
+          [null,null,null]
+        ]
+      }    
+    ); 
+
+    await play(program, players[playerIndex],
+      { gamePda: gamePda, potPda: potPda, tile: {row: 2, column:2}},
+      { moves: ++moves, playerIndex: playerIndex, state: { won: { winner: players[playerIndex].publicKey }, }, 
+        board: [
+          [0,1,null],
+          [1,0,null],
+          [null,null,0]
+        ]
+      }    
+    );
+  });
 
 });
