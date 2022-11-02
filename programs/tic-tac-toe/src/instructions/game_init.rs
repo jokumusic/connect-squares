@@ -1,9 +1,24 @@
 use anchor_lang::prelude::*;
-use crate::state::{game::*, Pot};
+use crate::{state::{game::*, Pot}};
 
 
 
 pub fn game_init_handler(ctx: Context<GameInit>, nonce: u32, rows: u8, cols: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
+     //transfer wager to pot
+     let from = ctx.accounts.creator.to_account_info();
+     let to = ctx.accounts.pot.to_account_info();
+     //transfer_sol(from, to, u64::from(wager))?;
+     let ix = anchor_lang::solana_program::system_instruction::transfer(
+        from.key,
+        to.key,
+        u64::from(wager),
+    );
+
+    anchor_lang::solana_program::program::invoke(
+        &ix,
+        &[from, to]
+    )?;
+
     let pot = &mut ctx.accounts.pot;
     let pot_bump = *ctx.bumps.get("pot").unwrap();
     pot.init(pot_bump, ctx.accounts.game.key())?;
@@ -33,6 +48,11 @@ pub struct GameInit<'info> {
         init,
         payer = creator,
         space = 8 + Pot::SIZE,
+        /*mut,        
+        realloc = 8 + Pot::SIZE,
+        realloc::payer = creator,
+        realloc::zero = true,        
+        */
         seeds = [b"pot", game.key().as_ref()],
         bump,
     )]

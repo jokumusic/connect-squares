@@ -6,7 +6,7 @@ use crate::{
         Pot,
     },
     errors::GameError,
-    utils::transfer_sol,
+    utils::transfer_owned_sol,
 };
 
 
@@ -22,7 +22,7 @@ pub fn game_play_handler(ctx: Context<GamePlay>, tile: Tile) -> Result<()> {
         let from = &mut ctx.accounts.pot.to_account_info();
         let to = &mut player.to_account_info();
         let amount = from.lamports();
-        transfer_sol(from, to, amount)?;
+        transfer_owned_sol(from, to, amount)?;
     }
 
     Ok(())

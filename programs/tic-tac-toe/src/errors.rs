@@ -30,7 +30,6 @@ pub enum GameError {
     MaximumPlayersMustBeGreaterThanOne,
     #[msg("maximum players must be greater than or equal to minimum players")]
     MaximumPlayersMustBeGreaterThanOrEqualToMiniumPlayers,
-
-
-
+    #[msg("failed to transfer funds")]
+    FailedToTransferFunds,
 }

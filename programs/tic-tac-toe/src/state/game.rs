@@ -155,6 +155,10 @@ impl Game {
         self.state
     }
 
+    pub fn get_wager(&self) -> u32 {
+        self.wager
+    }
+
     pub fn is_active(&self) -> bool {
         self.state == GameState::Active
     }
