@@ -90,6 +90,11 @@ impl Game {
         require!(tile.row < self.rows, GameError::TileOutOfBounds);
         require!(tile.column < self.cols, GameError::TileOutOfBounds);
 
+        let calculated_player_index = self.calculate_current_player_index();
+        let calculated_player_pubkey = self.players[calculated_player_index as usize];
+        let slot = Clock::get()?.slot;
+        
+        /*
         let slot = Clock::get()?.slot;
         let slot_expired = slot - self.last_move_slot > u64::from(PLAYER_TURN_MAX_SLOTS);
         if slot_expired {
@@ -97,34 +102,34 @@ impl Game {
             if self.current_player_index >= self.joined_players {
                 self.current_player_index = 0;
             }
-        }        
-        
-        require_keys_eq!(self.current_player(), player, GameError::NotPlayersTurn);       
-        
-        let current_player_index = self.current_player_index;
+        } 
+        */
+        require_keys_eq!(calculated_player_pubkey, player, GameError::NotPlayersTurn);
         
         let cell_value = self.board[tile.row as usize][tile.column as usize];
         match cell_value {
             Some(_) => return Err(GameError::TileAlreadySet.into()),
             None => {
-                self.board[tile.row as usize][tile.column as usize] = Some(current_player_index);
+                self.board[tile.row as usize][tile.column as usize] = Some(calculated_player_index as u8);
                 self.last_move_slot = slot;
                 self.moves += 1;
+                self.current_player_index = calculated_player_index as u8;
             }
         }
+        
         
 
         if self.row_all_equal(tile.row as usize) || self.col_all_equal(tile.column as usize) || self.diagonal_all_equal() {
             self.state = GameState::Won {
-                winner: self.current_player(),
-            };
+                winner: player,
+            };            
         }
         else if self.moves == self.cols * self.rows {
             self.state = GameState::Tie;
         }
 
         if GameState::Active == self.state {
-            self.current_player_index += 1;
+            self.current_player_index = (calculated_player_index as u8) + 1;
             if self.current_player_index >= self.joined_players {
                 self.current_player_index = 0;
             }
@@ -151,10 +156,6 @@ impl Game {
 
     pub fn is_active(&self) -> bool {
         self.state == GameState::Active
-    }
-
-    pub fn current_player(&self) -> Pubkey {
-        self.players[self.current_player_index as usize]
     }
 
     fn row_all_equal(&self, row: usize) -> bool {
@@ -219,6 +220,29 @@ impl Game {
         }
 
         false
+    }
+
+    fn calculate_current_player_index(&self)-> usize {
+        let slot = Clock::get().unwrap().slot;
+        let slot_diff = slot - self.last_move_slot;
+        let turns_passed =  slot_diff / (PLAYER_TURN_MAX_SLOTS as u64);
+        let mut player_index = self.current_player_index;
+        let adder;
+        if turns_passed >= self.joined_players as u64 {
+            adder = (turns_passed % (self.joined_players as u64)) as u8;
+        } else{
+            adder = turns_passed as u8;
+        }
+
+        player_index += adder;
+      
+        if player_index >= self.joined_players {
+            player_index = 0;
+        }
+
+        //msg!("last_move_slot: {}, slot: {}, slot_diff: {}, turns_passed: {}, adder: {}, player_index: {}", 
+        //    self.last_move_slot, slot, slot_diff, turns_passed, adder, player_index);
+        player_index as usize
     }
 
 }
