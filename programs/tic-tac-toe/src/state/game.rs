@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 use crate::errors::GameError;
 
+const PLAYER_TURN_MAX_SLOTS: u8 = 240;
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Copy)]
 pub enum GameState {
     Waiting,
@@ -77,6 +79,7 @@ impl Game {
 
         if self.joined_players == self.min_players {
             self.state = GameState::Active;
+            self.last_move_slot =  Clock::get()?.slot;
         }
 
         Ok(())
@@ -84,10 +87,20 @@ impl Game {
 
     pub fn play(&mut self, player: Pubkey, tile: &Tile) -> Result<()> {
         require!(self.is_active(), GameError::GameAlreadyOver);
-        require_keys_eq!(self.current_player(), player, GameError::NotPlayersTurn);
         require!(tile.row < self.rows, GameError::TileOutOfBounds);
         require!(tile.column < self.cols, GameError::TileOutOfBounds);
 
+        let slot = Clock::get()?.slot;
+        let slot_expired = slot - self.last_move_slot > u64::from(PLAYER_TURN_MAX_SLOTS);
+        if slot_expired {
+            self.current_player_index += 1;
+            if self.current_player_index >= self.joined_players {
+                self.current_player_index = 0;
+            }
+        }        
+        
+        require_keys_eq!(self.current_player(), player, GameError::NotPlayersTurn);       
+        
         let current_player_index = self.current_player_index;
         
         let cell_value = self.board[tile.row as usize][tile.column as usize];
@@ -95,6 +108,7 @@ impl Game {
             Some(_) => return Err(GameError::TileAlreadySet.into()),
             None => {
                 self.board[tile.row as usize][tile.column as usize] = Some(current_player_index);
+                self.last_move_slot = slot;
                 self.moves += 1;
             }
         }
