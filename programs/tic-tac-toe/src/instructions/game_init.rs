@@ -27,7 +27,7 @@ pub struct GameInit<'info> {
         seeds = [b"game", creator.key().as_ref(), &nonce.to_be_bytes()],
         bump,
     )]
-    pub game: Account<'info, Game>,
+    pub game: Box<Account<'info, Game>>,
  
     #[account(
         init,

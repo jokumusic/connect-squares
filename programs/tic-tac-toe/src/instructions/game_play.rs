@@ -37,7 +37,7 @@ pub struct GamePlay<'info> {
         seeds = [b"game", game.get_creator().as_ref(), &game.get_nonce().to_be_bytes()],
         bump = game.get_bump(),
     )]
-    pub game: Account<'info, Game>,
+    pub game: Box<Account<'info, Game>>,
 
     #[account(
         mut,

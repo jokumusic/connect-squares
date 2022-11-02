@@ -39,7 +39,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub const SIZE: usize = 1 + 32 + 4 + (1+32) + 1 + 1 + 1 + 1 + 1 + 4 + 32 + 8 + 8 + 1 + 1;
+    pub const SIZE: usize = 1 + 32 + 4 + (1+32) + 1 + 1 + 1 + 1 + 1 + 4 + 32 + 8 + 8 + 1;
 
     pub fn init(&mut self, bump: u8, creator: Pubkey, nonce: u32, pot:Pubkey, rows: u8, cols: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
         require!(rows > 2, GameError::RowsMustBeGreaterThanTwo);
@@ -125,7 +125,8 @@ impl Game {
             };            
         }
         else if self.moves == self.cols * self.rows {
-            self.state = GameState::Tie;
+            //self.state = GameState::Tie;
+            self.board = vec![vec![None; self.cols as usize]; self.rows as usize]; //reset board. This is a deathmatch - ties don't exist.
         }
 
         if GameState::Active == self.state {
