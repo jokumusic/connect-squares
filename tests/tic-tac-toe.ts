@@ -19,6 +19,7 @@ export type GameInitParameters = {
   potPda: PublicKey,
   cols: number,
   rows: number,
+  connect: number,
   minPlayers: number,
   maxPlayers: number,
   wager: number,
@@ -85,7 +86,7 @@ async function getPotPda(programId: PublicKey, gamePda: PublicKey) {
 
 async function initGame(program: Program<TicTacToe>, player: Keypair, params: GameInitParameters) {
   const tx = await program.methods
-        .gameInit(params.gameNonce, params.rows, params.cols, params.minPlayers, params.maxPlayers, params.wager)
+        .gameInit(params.gameNonce, params.rows, params.cols, params.connect, params.minPlayers, params.maxPlayers, params.wager)
         .accounts({
           creator: player.publicKey,
           game: params.gamePda,
@@ -191,6 +192,7 @@ describe('tic-tac-toe', () => {
   it('setup game!', async() => {
     const rows = 3;
     const cols = 3;
+    const connect = 3;
     const minPlayers = 2;
     const maxPlayers = 2;
 
@@ -203,6 +205,7 @@ describe('tic-tac-toe', () => {
       potPda: potPda,
       cols: cols,
       rows,
+      connect,
       minPlayers,
       maxPlayers,
       wager,
@@ -245,6 +248,7 @@ describe('tic-tac-toe', () => {
   it('horizontal win!', async () => {
     const rows = 3;
     const cols = 3;
+    const connect = 3;
     const minPlayers = 2;
     const maxPlayers = 2;
     let moves = 0;
@@ -258,12 +262,13 @@ describe('tic-tac-toe', () => {
       potPda: potPda,
       cols: cols,
       rows,
+      connect,
       minPlayers,
       maxPlayers,
       wager,
     });
 
-    const joinGameConfirmation = await joinGame(program, playerTwo, { gamePda, potPda}); 
+    const joinGameConfirmation = await joinGame(program, playerTwo, { gamePda, potPda});
     const game = await program.account.game.fetch(gamePda);
     const players = game.players.map(p=>{ return p.equals(playerOne.publicKey) ? playerOne : playerTwo });
     let playerIndex = game.currentPlayerIndex;
@@ -398,6 +403,7 @@ describe('tic-tac-toe', () => {
   it('vertical win!', async () => {
     const rows = 3;
     const cols = 3;
+    const connect = 3;
     const minPlayers = 2;
     const maxPlayers = 2;
     let moves = 0;
@@ -411,6 +417,7 @@ describe('tic-tac-toe', () => {
       potPda: potPda,
       cols: cols,
       rows,
+      connect,
       minPlayers,
       maxPlayers,
       wager,
@@ -481,6 +488,7 @@ describe('tic-tac-toe', () => {
   it('positive slope win!', async () => {
     const rows = 3;
     const cols = 3;
+    const connect = 3;
     const minPlayers = 2;
     const maxPlayers = 2;
     let moves = 0;
@@ -494,6 +502,7 @@ describe('tic-tac-toe', () => {
       potPda: potPda,
       cols: cols,
       rows,
+      connect,
       minPlayers,
       maxPlayers,
       wager,
@@ -565,6 +574,7 @@ describe('tic-tac-toe', () => {
   it('negative slope win!', async () => {
     const rows = 3;
     const cols = 3;
+    const connect = 3;
     const minPlayers = 2;
     const maxPlayers = 2;
     let moves = 0;
@@ -578,6 +588,7 @@ describe('tic-tac-toe', () => {
       potPda: potPda,
       cols: cols,
       rows,
+      connect,
       minPlayers,
       maxPlayers,
       wager,

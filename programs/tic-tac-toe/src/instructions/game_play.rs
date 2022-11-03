@@ -25,8 +25,8 @@ pub fn game_play_handler(ctx: Context<GamePlay>, tile: Tile) -> Result<()> {
         transfer_owned_sol(pot,
             &mut player.to_account_info(),
             pot.lamports())?;
-        
-        //transfer remainder(rent) back to the creator        
+
+        //transfer remainder(rent) back to the creator 
     }
 
     Ok(())

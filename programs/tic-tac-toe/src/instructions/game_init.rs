@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use crate::{state::{game::*, Pot}};
 
 
-pub fn game_init_handler(ctx: Context<GameInit>, nonce: u32, rows: u8, cols: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
+pub fn game_init_handler(ctx: Context<GameInit>, nonce: u32, rows: u8, cols: u8, connect: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
      //transfer wager to pot
      let from = ctx.accounts.creator.to_account_info();
      let to = ctx.accounts.pot.to_account_info();
@@ -24,12 +24,12 @@ pub fn game_init_handler(ctx: Context<GameInit>, nonce: u32, rows: u8, cols: u8,
 
     let bump = *ctx.bumps.get("game").unwrap();
     let creator_key = ctx.accounts.creator.key();
-    ctx.accounts.game.init(bump, creator_key, nonce, pot.key(), rows, cols, min_players, max_players, wager)
+    ctx.accounts.game.init(bump, creator_key, nonce, pot.key(), rows, cols, connect, min_players, max_players, wager)
 }
 
 
 #[derive(Accounts)]
-#[instruction(nonce: u32, rows: u8, cols: u8, min_players: u8, max_players: u8, wager: u32)]
+#[instruction(nonce: u32, rows: u8, cols: u8, connect: u8, min_players: u8, max_players: u8, wager: u32)]
 pub struct GameInit<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,

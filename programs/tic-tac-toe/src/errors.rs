@@ -34,4 +34,6 @@ pub enum GameError {
     FailedToTransferFunds,
     #[msg("too many players specified")]
     TooManyPlayersSpecified,
+    #[msg("connect minimum not met")]
+    ConnectMinimumNotMet
 }

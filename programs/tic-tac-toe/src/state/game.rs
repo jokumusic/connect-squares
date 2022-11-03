@@ -25,6 +25,7 @@ pub struct Game {
     state: GameState, //1+32
     rows: u8, //1;
     cols: u8, //1;
+    connect: u8, //1;
     min_players: u8, //1;
     max_players: u8, //1;
     moves: u8, //1;
@@ -39,9 +40,9 @@ pub struct Game {
 }
 
 impl Game {
-    pub const SIZE: usize = 1 + 32 + 4 + (1+32) + 1 + 1 + 1 + 1 + 1 + 4 + 32 + 8 + 8 + 1;
+    pub const SIZE: usize = 1 + 32 + 4 + (1+32) + 1 + 1 + 1 + 1 + 1 + 1 + 4 + 32 + 8 + 8 + 1;
 
-    pub fn init(&mut self, bump: u8, creator: Pubkey, nonce: u32, pot:Pubkey, rows: u8, cols: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
+    pub fn init(&mut self, bump: u8, creator: Pubkey, nonce: u32, pot:Pubkey, rows: u8, cols: u8, connect: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
         require!(rows > 2, GameError::RowsMustBeGreaterThanTwo);
         require!(cols > 2, GameError::ColumnsMustBeGreaterThanTwo);
         require!(min_players > 1, GameError::MinimumPlayersMustBeGreaterThanOne);
@@ -50,6 +51,7 @@ impl Game {
         require!(min_players < 3, GameError::TooManyPlayersSpecified);
         require!(max_players < 3, GameError::TooManyPlayersSpecified);
         require!(max_players >= min_players, GameError::MaximumPlayersMustBeGreaterThanOrEqualToMiniumPlayers);
+        require!(connect > 2, GameError::ConnectMinimumNotMet);
 
         self.bump = bump;
         self.creator = creator;
@@ -57,6 +59,7 @@ impl Game {
         self.state = GameState::Waiting;
         self.rows = rows;
         self.cols = cols;
+        self.connect = connect;
         self.min_players = min_players;
         self.max_players = max_players;
         self.moves = 0;
@@ -98,16 +101,6 @@ impl Game {
         let calculated_player_pubkey = self.players[calculated_player_index as usize];
         let slot = Clock::get()?.slot;
         
-        /*
-        let slot = Clock::get()?.slot;
-        let slot_expired = slot - self.last_move_slot > u64::from(PLAYER_TURN_MAX_SLOTS);
-        if slot_expired {
-            self.current_player_index += 1;
-            if self.current_player_index >= self.joined_players {
-                self.current_player_index = 0;
-            }
-        } 
-        */
         require_keys_eq!(calculated_player_pubkey, player, GameError::NotPlayersTurn);
         
         let cell_value = self.board[tile.row as usize][tile.column as usize];
@@ -122,7 +115,7 @@ impl Game {
         }       
         
 
-        if self.row_all_equal(tile.row as usize) || self.col_all_equal(tile.column as usize) || self.positive_slope_all_equal() || self.negative_slope_all_equal() {
+        if self.move_has_won(tile.row, tile.column) {
             self.state = GameState::Won {
                 winner: player,
             };            
@@ -143,16 +136,16 @@ impl Game {
     }
 
     fn shuffle_players(&mut self) -> Result<()> {
-        let player_count = self.players.len();
+        let player_count = self.players.len() as u64;
         let clock = Clock::get()?;
+        let seed_a = clock.unix_timestamp as u64; 
+        let seed_b = clock.slot;
 
-        for i in 1..player_count {
-            let seed_a = clock.unix_timestamp as u64 / i as u64;
-            let seed_b = clock.slot / i as u64;
-            let a = (seed_a % player_count as u64) as usize;
-            let b = (seed_b % player_count as u64) as usize;
+        for i in 1..player_count {   
+            let a = ((seed_a / i) % player_count) as usize;
+            let b = ((seed_b / i) % player_count) as usize;
             //msg!("seed_a={},seed_b={}, a={}, b={}", seed_a, seed_b, a, b);
-            //add some reverses in here to make it more of a shuffle for larger player counts?
+            //add some self.players.reverse()? in here to make it more of a shuffle for larger player counts?
             if a != b {
                 self.players.swap(a, b);                
             }
@@ -187,6 +180,40 @@ impl Game {
 
     pub fn get_player_count(&self) -> u8 {
         self.joined_players
+    }
+
+    fn move_has_won(&self, row: u8, col: u8) -> bool {
+        let row = row as i8;
+        let col = col as i8;
+        let adjacent_required = self.connect - 1;
+
+        if self.adjacent_cell_count(row,col,0,1) + self.adjacent_cell_count(row,col,0,-1) >= adjacent_required //horizontal
+        || self.adjacent_cell_count(row,col,1,0) + self.adjacent_cell_count(row,col,-1,0) >= adjacent_required //vertical
+        || self.adjacent_cell_count(row,col,-1,1) + self.adjacent_cell_count(row,col,1,-1) >= adjacent_required //positive slope
+        || self.adjacent_cell_count(row,col,1,1)+ self.adjacent_cell_count(row,col,-1,-1) >= adjacent_required //negative slope
+        {
+            return true
+        }
+        
+        false
+    }
+
+    fn adjacent_cell_count(&self, row: i8,col:i8, row_increment: i8, col_increment: i8) -> u8 {
+        if self.cell_value(row,col) == self.cell_value(row+row_increment, col+col_increment) {
+            return 1 + self.adjacent_cell_count(row+row_increment, col+col_increment, row_increment, col_increment);
+        }
+
+        0
+    }
+
+    fn cell_value(&self, row: i8, col: i8) -> Option<u8> {
+        let row = row as usize;
+        let col = col as usize;
+        if row >= self.board.len() || col >= self.board[0].len() {
+            return None;
+        }
+
+        self.board[row][col]
     }
 
     fn row_all_equal(&self, row: usize) -> bool {
