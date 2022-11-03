@@ -144,10 +144,12 @@ impl Game {
 
     fn shuffle_players(&mut self) -> Result<()> {
         let player_count = self.players.len();
-        for _ in 1..player_count {
-            let seed_a = Clock::get()?.unix_timestamp;
-            let a = (seed_a % player_count as i64) as usize;
-            let seed_b = Clock::get()?.slot; //dont use the unix_timestamp again,because it just gives the same number
+        let clock = Clock::get()?;
+
+        for i in 1..player_count {
+            let seed_a = clock.unix_timestamp as u64 / i as u64;
+            let seed_b = clock.slot / i as u64;
+            let a = (seed_a % player_count as u64) as usize;
             let b = (seed_b % player_count as u64) as usize;
             //msg!("seed_a={},seed_b={}, a={}, b={}", seed_a, seed_b, a, b);
             //add some reverses in here to make it more of a shuffle for larger player counts?

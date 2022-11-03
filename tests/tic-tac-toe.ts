@@ -4,7 +4,6 @@ import {PublicKey, Keypair, sendAndConfirmTransaction} from "@solana/web3.js";
 import * as web3 from "@solana/web3.js";
 import { TicTacToe } from '../target/types/tic_tac_toe';
 import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
 import { expect } from 'chai';
 
 export const GameState = {
