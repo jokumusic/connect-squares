@@ -35,5 +35,9 @@ pub enum GameError {
     #[msg("too many players specified")]
     TooManyPlayersSpecified,
     #[msg("connect minimum not met")]
-    ConnectMinimumNotMet
+    ConnectMinimumNotMet,
+    #[msg("connect cannot be greater than the number of rows")]
+    ConnectIsGreaterThanNumberOfRows,
+    #[msg("connect cannot be greater than the number of columns")]
+    ConnectIsGreaterThanNumberOfColumns,
 }

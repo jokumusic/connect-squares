@@ -45,13 +45,12 @@ impl Game {
     pub fn init(&mut self, bump: u8, creator: Pubkey, nonce: u32, pot:Pubkey, rows: u8, cols: u8, connect: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
         require!(rows > 2, GameError::RowsMustBeGreaterThanTwo);
         require!(cols > 2, GameError::ColumnsMustBeGreaterThanTwo);
-        require!(min_players > 1, GameError::MinimumPlayersMustBeGreaterThanOne);
-        require!(max_players > 1, GameError::MaximumPlayersMustBeGreaterThanOne);
-        //only allow 2 players for now. More than two players allows collusion/cheating
-        require!(min_players < 3, GameError::TooManyPlayersSpecified);
-        require!(max_players < 3, GameError::TooManyPlayersSpecified);
-        require!(max_players >= min_players, GameError::MaximumPlayersMustBeGreaterThanOrEqualToMiniumPlayers);
+        //only allow 2 players for now. More than two players allows collusion/cheating        
+        require!(min_players > 1 && max_players > 1, GameError::MinimumPlayersMustBeGreaterThanOne);
+        require!(min_players == 2 && max_players == 2 , GameError::TooManyPlayersSpecified);
         require!(connect > 2, GameError::ConnectMinimumNotMet);
+        require!(connect <= rows, GameError::ConnectIsGreaterThanNumberOfRows);
+        require!(connect <= cols, GameError::ConnectIsGreaterThanNumberOfColumns);
 
         self.bump = bump;
         self.creator = creator;
