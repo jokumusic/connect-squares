@@ -236,11 +236,11 @@ describe('tic-tac-toe', () => {
     const [gamePda, gamePdaBump] = await getGamePda(program, playerOne.publicKey, firstGameNonce);
     const [potPda, potPdaBump] = await getPotPda(program.programId, gamePda);
     
-    const confirmation = await joinGame(program, playerTwo, { gamePda, potPda});   
+    const confirmation = await joinGame(program, playerTwo, {gamePda, potPda});   
 
     let game = await program.account.game.fetch(gamePda);
     expect(game.state).to.eql({ active:{} });
-    expect(game.players).to.eql([playerOne.publicKey, playerTwo.publicKey]);
+    expect(game.players).to.have.deep.members([playerOne.publicKey, playerTwo.publicKey]);
   });
 
   it('horizontal win!', async () => {
@@ -249,8 +249,6 @@ describe('tic-tac-toe', () => {
     const minPlayers = 2;
     const maxPlayers = 2;
     let moves = 0;
-    let playerIndex = 0;
-    const players = [playerOne, playerTwo];
 
     const [gamePda, gamePdaBump, gameNonce] = await getGamePda(program, playerOne.publicKey);
     const [potPda, potPdaBump] = await getPotPda(program.programId, gamePda);
@@ -267,6 +265,9 @@ describe('tic-tac-toe', () => {
     });
 
     const joinGameConfirmation = await joinGame(program, playerTwo, { gamePda, potPda}); 
+    const game = await program.account.game.fetch(gamePda);
+    const players = game.players.map(p=>{ return p.equals(playerOne.publicKey) ? playerOne : playerTwo });
+    let playerIndex = game.currentPlayerIndex;
 
     await play(program, players[playerIndex],
         { gamePda: gamePda, potPda: potPda, tile: {row: 0, column: 0}},
@@ -401,8 +402,6 @@ describe('tic-tac-toe', () => {
     const minPlayers = 2;
     const maxPlayers = 2;
     let moves = 0;
-    let playerIndex = 0;
-    const players = [playerOne, playerTwo];
 
     const [gamePda, gamePdaBump, gameNonce] = await getGamePda(program, playerOne.publicKey);
     const [potPda, potPdaBump] = await getPotPda(program.programId, gamePda);
@@ -419,6 +418,9 @@ describe('tic-tac-toe', () => {
     });
 
     const joinGameConfirmation = await joinGame(program, playerTwo, { gamePda, potPda}); 
+    const game = await program.account.game.fetch(gamePda);
+    const players = game.players.map(p=>{ return p.equals(playerOne.publicKey) ? playerOne : playerTwo });
+    let playerIndex = game.currentPlayerIndex;
 
     await play(program, players[playerIndex],
         { gamePda: gamePda, potPda: potPda, tile: {row: 0, column: 0}},
@@ -483,8 +485,6 @@ describe('tic-tac-toe', () => {
     const minPlayers = 2;
     const maxPlayers = 2;
     let moves = 0;
-    let playerIndex = 0;
-    const players = [playerOne, playerTwo];
 
     const [gamePda, gamePdaBump, gameNonce] = await getGamePda(program, playerOne.publicKey);
     const [potPda, potPdaBump] = await getPotPda(program.programId, gamePda);
@@ -501,6 +501,9 @@ describe('tic-tac-toe', () => {
     });
 
     const joinGameConfirmation = await joinGame(program, playerTwo, { gamePda, potPda}); 
+    const game = await program.account.game.fetch(gamePda);
+    const players = game.players.map(p=>{ return p.equals(playerOne.publicKey) ? playerOne : playerTwo });
+    let playerIndex = game.currentPlayerIndex;
 
     await play(program, players[playerIndex],
         { gamePda: gamePda, potPda: potPda, tile: {row: 2, column: 0}},
@@ -566,8 +569,6 @@ describe('tic-tac-toe', () => {
     const minPlayers = 2;
     const maxPlayers = 2;
     let moves = 0;
-    let playerIndex = 0;
-    const players = [playerOne, playerTwo];
 
     const [gamePda, gamePdaBump, gameNonce] = await getGamePda(program, playerOne.publicKey);
     const [potPda, potPdaBump] = await getPotPda(program.programId, gamePda);
@@ -584,6 +585,9 @@ describe('tic-tac-toe', () => {
     });
 
     const joinGameConfirmation = await joinGame(program, playerTwo, { gamePda, potPda}); 
+    const game = await program.account.game.fetch(gamePda);
+    const players = game.players.map(p=>{ return p.equals(playerOne.publicKey) ? playerOne : playerTwo });
+    let playerIndex = game.currentPlayerIndex;
 
     await play(program, players[playerIndex],
         { gamePda: gamePda, potPda: potPda, tile: {row: 0, column: 0}},

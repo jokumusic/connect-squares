@@ -2,7 +2,6 @@ use anchor_lang::prelude::*;
 use crate::{state::{game::*, Pot}};
 
 
-
 pub fn game_init_handler(ctx: Context<GameInit>, nonce: u32, rows: u8, cols: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
      //transfer wager to pot
      let from = ctx.accounts.creator.to_account_info();

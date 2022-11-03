@@ -32,4 +32,6 @@ pub enum GameError {
     MaximumPlayersMustBeGreaterThanOrEqualToMiniumPlayers,
     #[msg("failed to transfer funds")]
     FailedToTransferFunds,
+    #[msg("too many players specified")]
+    TooManyPlayersSpecified,
 }

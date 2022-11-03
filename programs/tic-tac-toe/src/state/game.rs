@@ -46,6 +46,9 @@ impl Game {
         require!(cols > 2, GameError::ColumnsMustBeGreaterThanTwo);
         require!(min_players > 1, GameError::MinimumPlayersMustBeGreaterThanOne);
         require!(max_players > 1, GameError::MaximumPlayersMustBeGreaterThanOne);
+        //only allow 2 players for now. More than two players allows collusion/cheating
+        require!(min_players < 3, GameError::TooManyPlayersSpecified);
+        require!(max_players < 3, GameError::TooManyPlayersSpecified);
         require!(max_players >= min_players, GameError::MaximumPlayersMustBeGreaterThanOrEqualToMiniumPlayers);
 
         self.bump = bump;
@@ -78,6 +81,7 @@ impl Game {
         self.joined_players += 1;
 
         if self.joined_players == self.min_players {
+            self.shuffle_players()?;
             self.state = GameState::Active;
             self.last_move_slot =  Clock::get()?.slot;
         }
@@ -132,6 +136,19 @@ impl Game {
             self.current_player_index = (calculated_player_index as u8) + 1;
             if self.current_player_index >= self.joined_players {
                 self.current_player_index = 0;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn shuffle_players(&mut self) -> Result<()> {
+        let player_count = self.players.len();
+        for _ in 0..player_count {
+            let a = (Clock::get()?.unix_timestamp % player_count as i64) as usize;
+            let b = (Clock::get()?.unix_timestamp % player_count as i64) as usize;
+            if a != b {
+                self.players.swap(a, b)
             }
         }
 
