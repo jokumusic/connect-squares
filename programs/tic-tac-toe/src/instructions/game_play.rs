@@ -19,10 +19,14 @@ pub fn game_play_handler(ctx: Context<GamePlay>, tile: Tile) -> Result<()> {
     if let GameState::Won{winner} = game.get_state() {
         require_keys_eq!(winner, player.key(), GameError::PlayerWinnerMismatch);
 
-        let from = &mut ctx.accounts.pot.to_account_info();
-        let to = &mut player.to_account_info();
-        let amount = from.lamports();
-        transfer_owned_sol(from, to, amount)?;
+        //transfer pot to winner
+        let pot = &mut ctx.accounts.pot.to_account_info();
+        //let winnings = game.get_wager() * game.get_player_count() as u32;
+        transfer_owned_sol(pot,
+            &mut player.to_account_info(),
+            pot.lamports())?;
+        
+        //transfer remainder(rent) back to the creator        
     }
 
     Ok(())

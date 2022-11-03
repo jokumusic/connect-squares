@@ -144,11 +144,15 @@ impl Game {
 
     fn shuffle_players(&mut self) -> Result<()> {
         let player_count = self.players.len();
-        for _ in 0..player_count {
-            let a = (Clock::get()?.unix_timestamp % player_count as i64) as usize;
-            let b = (Clock::get()?.unix_timestamp % player_count as i64) as usize;
+        for _ in 1..player_count {
+            let seed_a = Clock::get()?.unix_timestamp;
+            let a = (seed_a % player_count as i64) as usize;
+            let seed_b = Clock::get()?.slot; //dont use the unix_timestamp again,because it just gives the same number
+            let b = (seed_b % player_count as u64) as usize;
+            //msg!("seed_a={},seed_b={}, a={}, b={}", seed_a, seed_b, a, b);
+            //add some reverses in here to make it more of a shuffle for larger player counts?
             if a != b {
-                self.players.swap(a, b)
+                self.players.swap(a, b);                
             }
         }
 
@@ -177,6 +181,10 @@ impl Game {
 
     pub fn is_active(&self) -> bool {
         self.state == GameState::Active
+    }
+
+    pub fn get_player_count(&self) -> u8 {
+        self.joined_players
     }
 
     fn row_all_equal(&self, row: usize) -> bool {
