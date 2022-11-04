@@ -10,7 +10,8 @@ export const GameState = {
   waiting:{waiting:{}},
   active:{active:{}},
   tie:{tie:{}},
-  won:{won:{winner:{}}}
+  won:{won:{winner:{}}},
+  cancelled:{cancelled:{}},
 };
 
 export type GameInitParameters = {
@@ -150,7 +151,6 @@ describe('tic-tac-toe', () => {
   const playerOne = anchor.web3.Keypair.generate();
   const playerTwo = anchor.web3.Keypair.generate();
   const wager = 100000;
-  const firstGameNonce = Math.floor((Math.random() * Math.pow(2,32)));
   
   before(() => {
     return new Promise<void>(async (resolve,reject) => {
@@ -189,18 +189,18 @@ describe('tic-tac-toe', () => {
   });
 
   
-  it('setup game!', async() => {
+  it('setup game', async() => {
     const rows = 3;
     const cols = 3;
     const connect = 3;
     const minPlayers = 2;
     const maxPlayers = 2;
 
-    const [gamePda, gamePdaBump] = await getGamePda(program, playerOne.publicKey, firstGameNonce);
+    const [gamePda, gamePdaBump, gameNonce] = await getGamePda(program, playerOne.publicKey);
     const [potPda, potPdaBump] = await getPotPda(program.programId, gamePda);
 
     const confirmation = await initGame(program, playerOne, {
-      gameNonce:firstGameNonce,
+      gameNonce:gameNonce,
       gamePda: gamePda,
       potPda: potPda,
       cols: cols,
@@ -234,9 +234,26 @@ describe('tic-tac-toe', () => {
     expect(pot.game).to.eql(gamePda);
   });
 
-  it('player two joins game', async () => {
-    const [gamePda, gamePdaBump] = await getGamePda(program, playerOne.publicKey, firstGameNonce);
+  it('join game', async () => {
+    const rows = 3;
+    const cols = 3;
+    const connect = 3;
+    const minPlayers = 2;
+    const maxPlayers = 2;
+    const [gamePda, gamePdaBump, gameNonce] = await getGamePda(program, playerOne.publicKey);
     const [potPda, potPdaBump] = await getPotPda(program.programId, gamePda);
+
+    const initGameConfirmation = await initGame(program, playerOne, {
+      gameNonce,
+      gamePda: gamePda,
+      potPda: potPda,
+      cols: cols,
+      rows,
+      connect,
+      minPlayers,
+      maxPlayers,
+      wager,
+    });
     
     const confirmation = await joinGame(program, playerTwo, {gamePda, potPda});   
 
@@ -244,6 +261,55 @@ describe('tic-tac-toe', () => {
     expect(game.state).to.eql({ active:{} });
     expect(game.players).to.have.deep.members([playerOne.publicKey, playerTwo.publicKey]);
   });
+
+  it('cancel game', async() => {
+    const rows = 3;
+    const cols = 3;
+    const connect = 3;
+    const minPlayers = 2;
+    const maxPlayers = 2;
+
+    const [gamePda, gamePdaBump, gameNonce] = await getGamePda(program, playerOne.publicKey);
+    const [potPda, potPdaBump] = await getPotPda(program.programId, gamePda);
+
+    const confirmation = await initGame(program, playerOne, {
+      gameNonce:gameNonce,
+      gamePda: gamePda,
+      potPda: potPda,
+      cols: cols,
+      rows,
+      connect,
+      minPlayers,
+      maxPlayers,
+      wager,
+    });
+  
+    const balanceAfterInit = await program.provider.connection.getBalance(playerOne.publicKey);
+
+    let game = await program.account.game.fetch(gamePda);
+    expect(game.state).to.eql({ waiting:{} });
+
+    const cancelTx = await program.methods
+      .gameCancel()
+      .accounts({
+        player: playerOne.publicKey,
+        game: gamePda,
+        pot: potPda,
+      })
+      .transaction();
+
+    const txSignature = await anchor.web3.sendAndConfirmTransaction(program.provider.connection, cancelTx, [playerOne], {commitment: 'finalized'});
+    const txConfirmation = await program.provider.connection.confirmTransaction(txSignature,'finalized');
+
+    const balanceAfterCancel = await program.provider.connection.getBalance(playerOne.publicKey);
+    expect(balanceAfterCancel).to.be.greaterThan(balanceAfterInit);
+
+    let updatedGame = await program.account.game.fetchNullable(gamePda);
+    expect(updatedGame).to.be.null;
+    let updatedPot = await program.account.pot.fetchNullable(potPda);
+    expect(updatedPot).to.be.null;   
+  });
+
 
   it('horizontal win!', async () => {
     const rows = 3;
@@ -656,4 +722,5 @@ describe('tic-tac-toe', () => {
     );
   });
 
+  
 });

@@ -6,6 +6,7 @@ const PLAYER_TURN_MAX_SLOTS: u8 = 240;
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Copy)]
 pub enum GameState {
     Waiting,
+    Cancelled,
     Active,
     Tie,
     Won { winner: Pubkey },
@@ -76,6 +77,15 @@ impl Game {
         Ok(())
     }
 
+    pub fn cancel(&mut self, player: Pubkey) -> Result<()> {
+        require!(self.state == GameState::Waiting || self.state == GameState::Cancelled, GameError::GameAlreadyStarted);
+        require_keys_eq!(self.creator, player, GameError::NotAuthorized);
+
+        self.state = GameState::Cancelled;
+
+        Ok(())
+    }
+
     pub fn join(&mut self, player: Pubkey) -> Result<()> {
         require!(self.state == GameState::Waiting, GameError::NotAcceptingPlayers);
         
@@ -100,7 +110,7 @@ impl Game {
         let calculated_player_pubkey = self.players[calculated_player_index as usize];
         let slot = Clock::get()?.slot;
         
-        require_keys_eq!(calculated_player_pubkey, player, GameError::NotPlayersTurn);
+        require_keys_eq!(calculated_player_pubkey, player, GameError::NotPlayersTurn); //checks for out of turn players or if they're not even a player in this game
         
         let cell_value = self.board[tile.row as usize][tile.column as usize];
         match cell_value {

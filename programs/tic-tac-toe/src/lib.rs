@@ -21,6 +21,10 @@ pub mod tic_tac_toe {
         instructions::game_init_handler(ctx, nonce, rows, cols, connect, min_players, max_players, wager)
     }
 
+    pub fn game_cancel(ctx: Context<GameCancel>) -> Result<()> {
+        instructions::game_cancel_handler(ctx)
+    }
+
     pub fn game_join(ctx: Context<GameJoin>) -> Result<()> {
         instructions::game_join_handler(ctx)
     }

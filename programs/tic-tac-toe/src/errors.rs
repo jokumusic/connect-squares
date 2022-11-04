@@ -40,4 +40,6 @@ pub enum GameError {
     ConnectIsGreaterThanNumberOfRows,
     #[msg("connect cannot be greater than the number of columns")]
     ConnectIsGreaterThanNumberOfColumns,
+    #[msg("not authorized")]
+    NotAuthorized,
 }
