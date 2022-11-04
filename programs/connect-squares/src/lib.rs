@@ -10,11 +10,10 @@ pub mod errors;
 pub mod utils;
 
 
-// this key needs to be changed to whatever public key is returned by "anchor keys list"
-declare_id!("Fd8xjFh4Nk2RCR9zrvxJncDBfZo9ypqwFoiGnnX7YVC8");
+declare_id!("v8n2qgpkyp3yXh1sJ6YKkSs12XDBqLvn3HbTvCKMmz3");
 
 #[program]
-pub mod tic_tac_toe {
+pub mod connect_squares {
     use super::*;
 
     pub fn game_init(ctx: Context<GameInit>, nonce: u32, rows: u8, cols: u8, connect: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {

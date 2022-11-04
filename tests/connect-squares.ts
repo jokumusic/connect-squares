@@ -2,7 +2,7 @@ import * as anchor from '@project-serum/anchor';
 import { AnchorError, Program } from '@project-serum/anchor';
 import {PublicKey, Keypair, sendAndConfirmTransaction} from "@solana/web3.js";
 import * as web3 from "@solana/web3.js";
-import { TicTacToe } from '../target/types/tic_tac_toe';
+import { ConnectSquares } from '../target/types/connect_squares';
 import chai from 'chai';
 import { expect } from 'chai';
 
@@ -49,7 +49,7 @@ export type ExpectedPlayResult = {
   board: any,
 }
 
-async function getGamePda(program: Program<TicTacToe>, creator: PublicKey, nonce?: number) : Promise<[PublicKey,number,number]> {
+async function getGamePda(program: Program<ConnectSquares>, creator: PublicKey, nonce?: number) : Promise<[PublicKey,number,number]> {
 
   if(!nonce) {
     do {
@@ -85,7 +85,7 @@ async function getPotPda(programId: PublicKey, gamePda: PublicKey) {
     ], programId);
 }
 
-async function initGame(program: Program<TicTacToe>, player: Keypair, params: GameInitParameters) {
+async function initGame(program: Program<ConnectSquares>, player: Keypair, params: GameInitParameters) {
   const tx = await program.methods
         .gameInit(params.gameNonce, params.rows, params.cols, params.connect, params.minPlayers, params.maxPlayers, params.wager)
         .accounts({
@@ -100,7 +100,7 @@ async function initGame(program: Program<TicTacToe>, player: Keypair, params: Ga
   return txConfirmation;
 }
 
-async function joinGame(program: Program<TicTacToe>, player: Keypair, params: JoinGameParameters) {
+async function joinGame(program: Program<ConnectSquares>, player: Keypair, params: JoinGameParameters) {
   const tx = await program.methods
   .gameJoin()
   .accounts({
@@ -116,7 +116,7 @@ async function joinGame(program: Program<TicTacToe>, player: Keypair, params: Jo
   return txConfirmation;
 }
 
-async function play(program: Program<TicTacToe>, player: Keypair,  playParams: PlayParameters, expected: ExpectedPlayResult) {
+async function play(program: Program<ConnectSquares>, player: Keypair,  playParams: PlayParameters, expected: ExpectedPlayResult) {
   
   console.log('marking tile: ', playParams.tile);
 
@@ -143,10 +143,10 @@ async function play(program: Program<TicTacToe>, player: Keypair,  playParams: P
   return txConfirmation;
 }
 
-describe('tic-tac-toe', () => {
+describe('connect-squares', () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env())
-  const program = anchor.workspace.TicTacToe as Program<TicTacToe>;
+  const program = anchor.workspace.ConnectSquares as Program<ConnectSquares>;
   const provider = program.provider as anchor.AnchorProvider;
   const playerOne = anchor.web3.Keypair.generate();
   const playerTwo = anchor.web3.Keypair.generate();

@@ -1,5 +1,5 @@
 [programs.localnet]
-tic_tac_toe = "Fd8xjFh4Nk2RCR9zrvxJncDBfZo9ypqwFoiGnnX7YVC8"
+connect_squares = "v8n2qgpkyp3yXh1sJ6YKkSs12XDBqLvn3HbTvCKMmz3"
 
 [registry]
 url = "https://anchor.projectserum.com"
