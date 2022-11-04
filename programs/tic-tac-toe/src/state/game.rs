@@ -6,10 +6,10 @@ const PLAYER_TURN_MAX_SLOTS: u8 = 240;
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Copy)]
 pub enum GameState {
     Waiting,
-    Cancelled,
     Active,
     Tie,
     Won { winner: Pubkey },
+    Cancelled,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
