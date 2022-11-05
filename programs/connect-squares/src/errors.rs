@@ -42,4 +42,6 @@ pub enum GameError {
     ConnectIsGreaterThanNumberOfColumns,
     #[msg("not authorized")]
     NotAuthorized,
+    #[msg("cell value is invalid")]
+    CellValueIsInvalid
 }

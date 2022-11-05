@@ -37,7 +37,7 @@ pub struct GameInit<'info> {
     #[account(
         init, 
         payer = creator,
-        space = 8 + Game::SIZE + usize::from(max_players * 32) + usize::from(4 * rows * (2 * cols)),
+        space = 8 + Game::SIZE + usize::from(max_players * 32) + usize::from((4 * rows) * 2 + (rows * cols) * 2),
         seeds = [b"game", creator.key().as_ref(), &nonce.to_be_bytes()],
         bump,
     )]

@@ -68,11 +68,11 @@ impl Game {
         self.last_move_slot = 0;
         self.joined_players = 1;
         self.current_player_index = 0;
-        self.players = vec![Pubkey::default(); max_players as usize];
-        self.board = vec![vec![None; cols as usize]; rows as usize];
+        self.players = vec![Pubkey::default(); max_players as usize];        
         self.init_timestamp = Clock::get()?.unix_timestamp;
-
         self.players[0] = creator;
+
+        self.reset_board(rows, cols);
 
         Ok(())
     }
@@ -106,23 +106,13 @@ impl Game {
         require!(tile.row < self.rows, GameError::TileOutOfBounds);
         require!(tile.column < self.cols, GameError::TileOutOfBounds);
 
-        let calculated_player_index = self.calculate_current_player_index();
+        let calculated_player_index = self.calculate_current_player_index() as u8;
         let calculated_player_pubkey = self.players[calculated_player_index as usize];
-        let slot = Clock::get()?.slot;
         
         require_keys_eq!(calculated_player_pubkey, player, GameError::NotPlayersTurn); //checks for out of turn players or if they're not even a player in this game
-        
-        let cell_value = self.board[tile.row as usize][tile.column as usize];
-        match cell_value {
-            Some(_) => return Err(GameError::TileAlreadySet.into()),
-            None => {
-                self.board[tile.row as usize][tile.column as usize] = Some(calculated_player_index as u8);
-                self.last_move_slot = slot;
-                self.moves += 1;           
-                self.current_player_index = calculated_player_index as u8;     
-            }
-        }       
-        
+              
+        self.set_cell(tile.row, tile.column, Some(calculated_player_index))?; //cell value of 0 means not used. so use player_index+1
+        self.current_player_index = calculated_player_index as u8;
 
         if self.move_has_won(tile.row, tile.column) {
             self.state = GameState::Won {
@@ -131,11 +121,11 @@ impl Game {
         }
         else if self.moves == self.cols * self.rows {
             //self.state = GameState::Tie;
-            self.board = vec![vec![None; self.cols as usize]; self.rows as usize]; //reset board. This is a deathmatch - ties don't exist.
+            self.reset_board(self.rows, self.cols); //reset board. This is a deathmatch - ties don't exist.
         }
 
         if GameState::Active == self.state {
-            self.current_player_index = (calculated_player_index as u8) + 1;
+            self.current_player_index = calculated_player_index + 1;
             if self.current_player_index >= self.joined_players {
                 self.current_player_index = 0;
             }
@@ -223,7 +213,7 @@ impl Game {
         }
 
         self.board[row][col]
-    }   
+    }
 
     fn calculate_current_player_index(&self)-> usize {
         let slot = Clock::get().unwrap().slot;
@@ -246,6 +236,24 @@ impl Game {
         //msg!("last_move_slot: {}, slot: {}, slot_diff: {}, turns_passed: {}, adder: {}, player_index: {}", 
         //    self.last_move_slot, slot, slot_diff, turns_passed, adder, player_index);
         player_index as usize
+    }
+
+    fn reset_board(&mut self, rows: u8, cols: u8) {
+        self.board = vec![vec![None; cols as usize]; rows as usize];
+    }
+
+    fn set_cell(&mut self, row: u8, col: u8, val: Option<u8>) -> Result<()> {
+        let cell_value = self.cell_value(row as i8, col as i8);
+        match cell_value {
+            Some(_) => return Err(GameError::TileAlreadySet.into()),
+            None => {
+                self.board[row as usize][col as usize] = val;
+                self.last_move_slot = Clock::get()?.slot;
+                self.moves += 1;
+            },
+        }
+
+        Ok(())
     }
 
 }
