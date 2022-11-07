@@ -1,6 +1,16 @@
 use anchor_lang::error_code;
 
 #[error_code]
+pub enum ProgramError {
+    #[msg("unauthorized")]
+    Unauthorized,
+    #[msg("already initialized")]
+    AlreadyInitialized,
+    #[msg("insufficient funds")]
+    InsufficientFunds,
+}
+
+#[error_code]
 pub enum GameError {
     #[msg("specified tile is out of bounds")]
     TileOutOfBounds,
@@ -43,5 +53,5 @@ pub enum GameError {
     #[msg("not authorized")]
     NotAuthorized,
     #[msg("cell value is invalid")]
-    CellValueIsInvalid
+    CellValueIsInvalid,
 }

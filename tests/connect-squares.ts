@@ -6,6 +6,7 @@ import { ConnectSquares } from '../target/types/connect_squares';
 import chai from 'chai';
 import { expect } from 'chai';
 
+
 export const GameState = {
   waiting:{waiting:{}},
   active:{active:{}},
@@ -85,6 +86,13 @@ async function getPotPda(programId: PublicKey, gamePda: PublicKey) {
     ], programId);
 }
 
+async function getMetadataPda(programId: PublicKey){
+  return anchor.web3.PublicKey.findProgramAddressSync(
+    [
+      anchor.utils.bytes.utf8.encode("metadata"),
+    ], programId);
+}
+
 async function initGame(program: Program<ConnectSquares>, player: Keypair, params: GameInitParameters) {
   const tx = await program.methods
         .gameInit(params.gameNonce, params.rows, params.cols, params.connect, params.minPlayers, params.maxPlayers, params.wager)
@@ -119,6 +127,7 @@ async function joinGame(program: Program<ConnectSquares>, player: Keypair, param
 async function play(program: Program<ConnectSquares>, player: Keypair,  playParams: PlayParameters, expected: ExpectedPlayResult) {
   
   console.log('marking tile: ', playParams.tile);
+  const [metadataPda] = await getMetadataPda(program.programId);
 
   const tx = await program.methods
     .gamePlay(playParams.tile)
@@ -126,6 +135,7 @@ async function play(program: Program<ConnectSquares>, player: Keypair,  playPara
       player: player.publicKey,
       game: playParams.gamePda,
       pot: playParams.potPda,
+      metadata: metadataPda,
     })
     .transaction();
 
@@ -151,6 +161,7 @@ describe('connect-squares', () => {
   const playerOne = anchor.web3.Keypair.generate();
   const playerTwo = anchor.web3.Keypair.generate();
   const wager = 100000;
+
   
   before(() => {
     return new Promise<void>(async (resolve,reject) => {
@@ -187,6 +198,157 @@ describe('connect-squares', () => {
       resolve();
     });
   });
+
+  
+  it('init metadata', async() => {
+    const [metadataPda, metadataPdaBump] = await getMetadataPda(program.programId);
+    const tx = await program.methods
+      .metadataInit()
+      .accounts({
+        authority: playerOne.publicKey,
+        metadata: metadataPda,
+      })
+      .transaction();
+
+      const txSignature = await anchor.web3.sendAndConfirmTransaction(program.provider.connection, tx, [playerOne], {commitment: 'finalized'});
+      const txConfirmation = await program.provider.connection.confirmTransaction(txSignature,'finalized');
+
+      const metadata = await program.account.metadata.fetch(metadataPda);
+      expect(metadata.bump).to.equal(metadataPdaBump);
+      expect(metadata.initialized).to.equal(true);
+      expect(metadata.authority).to.eql(playerOne.publicKey);
+  });
+
+  it('re-init metadata fail - already initialized', async() => {
+    const [metadataPda, metadataPdaBump] = await getMetadataPda(program.programId);
+    const tx = await program.methods
+      .metadataInit()
+      .accounts({
+        authority: playerOne.publicKey,
+        metadata: metadataPda,
+      })
+      .transaction();
+
+      try {
+        const txSignature = await anchor.web3.sendAndConfirmTransaction(program.provider.connection, tx, [playerOne], {commitment: 'finalized'});
+        const txConfirmation = await program.provider.connection.confirmTransaction(txSignature,'finalized');
+        chai.assert(false, "should've failed but didn't ");
+      } catch(_err) {
+      }
+
+    const metadata = await program.account.metadata.fetch(metadataPda);
+    expect(metadata.bump).to.equal(metadataPdaBump);
+    expect(metadata.initialized).to.equal(true);
+    expect(metadata.authority).to.eql(playerOne.publicKey);
+  });
+
+  it('set metadata authority', async() => {
+    const [metadataPda, metadataPdaBump] = await getMetadataPda(program.programId);
+    const tx = await program.methods
+      .metdataSetAuthority(provider.wallet.publicKey)
+      .accounts({
+        authority: playerOne.publicKey,
+        metadata: metadataPda,
+      })
+      .transaction();
+
+      const txSignature = await anchor.web3.sendAndConfirmTransaction(program.provider.connection, tx, [playerOne], {commitment: 'finalized'});
+      const txConfirmation = await program.provider.connection.confirmTransaction(txSignature,'finalized');
+
+      const metadata = await program.account.metadata.fetch(metadataPda);
+      expect(metadata.bump).to.equal(metadataPdaBump);
+      expect(metadata.initialized).to.equal(true);
+      expect(metadata.authority).to.eql(provider.wallet.publicKey);
+  });
+
+  it('set metadata authority fail - invalid authority', async() => {
+    const [metadataPda, metadataPdaBump] = await getMetadataPda(program.programId);
+    const tx = await program.methods
+      .metdataSetAuthority(playerOne.publicKey)
+      .accounts({
+        authority: playerOne.publicKey,
+        metadata: metadataPda,
+      })
+      .transaction();
+
+      try{
+        const txSignature = await anchor.web3.sendAndConfirmTransaction(program.provider.connection, tx, [playerOne], {commitment: 'finalized'});
+        const txConfirmation = await program.provider.connection.confirmTransaction(txSignature,'finalized');
+        chai.assert(false, "should've failed but didn't ");
+      }catch(_err) {
+      }
+  });
+
+  it('metadata withdraw', async() =>{
+    const [metadataPda, metadataPdaBump] = await getMetadataPda(program.programId);
+    const lamports = 500000;
+
+    const metadataBalanceBeforeFund = await program.provider.connection.getBalance(metadataPda);
+    const fundMetadataTx = new anchor.web3
+      .Transaction()
+      .add(
+        anchor.web3.SystemProgram.transfer({
+          fromPubkey: program.provider.publicKey,
+          toPubkey: metadataPda,
+          lamports,
+        })
+      );
+
+    const fundMetadataTxSignature = await program.provider.sendAndConfirm(fundMetadataTx)
+    const metadataBalanceAfterFund = await provider.connection.getBalance(metadataPda);
+    //console.log(`beforeFund: ${metadataBalanceBeforeFund}, afterFund: ${metadataBalanceAfterFund}`);
+    expect(metadataBalanceAfterFund).is.equal(metadataBalanceBeforeFund + lamports);
+
+    const withdrawTx = await program.methods
+      .metadataWithdraw(new anchor.BN(lamports))
+      .accounts({
+        authority: program.provider.publicKey,
+        metadata: metadataPda,
+      })
+      .transaction();
+
+    const withdrawTxSignature = await program.provider.sendAndConfirm(withdrawTx);
+    
+    const metadataBalanceAfterWithdraw = await provider.connection.getBalance(metadataPda);
+    //console.log("balance after withdraw: ", metadataBalanceAfterWithdraw);
+    expect(metadataBalanceAfterWithdraw).is.equal(metadataBalanceBeforeFund);
+  })
+
+  it('metadata withdraw fail - unauthorized', async() =>{
+    const [metadataPda, metadataPdaBump] = await getMetadataPda(program.programId);
+    const lamports = 1;
+
+    const metadataBalanceBeforeFund = await program.provider.connection.getBalance(metadataPda);
+    const fundMetadataTx = new anchor.web3
+      .Transaction()
+      .add(
+        anchor.web3.SystemProgram.transfer({
+          fromPubkey: program.provider.publicKey,
+          toPubkey: metadataPda,
+          lamports,
+        })
+      );
+      
+    const fundMetadataTxSignature = await program.provider.sendAndConfirm(fundMetadataTx)
+    const metadataBalanceAfterFund = await provider.connection.getBalance(metadataPda);    
+    expect(metadataBalanceAfterFund).is.equal(metadataBalanceBeforeFund + lamports);
+
+    const withdrawTx = await program.methods
+      .metadataWithdraw(new anchor.BN(lamports))
+      .accounts({
+        authority: program.provider.publicKey,
+        metadata: metadataPda,
+      })
+      .transaction();
+
+    try{
+      const withdrawTxSignature = await program.provider.sendAndConfirm(withdrawTx);
+      chai.assert(false, "should've failed but didn't ");
+    } catch(_err) {
+    }  
+
+  });
+
 
   
   it('setup game', async() => {
@@ -722,5 +884,5 @@ describe('connect-squares', () => {
     );
   });
 
-  
+
 });

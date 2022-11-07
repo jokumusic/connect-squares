@@ -10,11 +10,23 @@ pub mod errors;
 pub mod utils;
 
 
-declare_id!("v8n2qgpkyp3yXh1sJ6YKkSs12XDBqLvn3HbTvCKMmz3");
+declare_id!("9ZSV8zYqPgsv4NXeJLN1x74wpR6LNVdFGgwnmAXH8TM9");
 
 #[program]
 pub mod connect_squares {
     use super::*;
+
+    pub fn metadata_init(ctx: Context<MetadataInit>) -> Result<()> {
+        instructions::metadata_init_handler(ctx)
+    }
+
+    pub fn metdata_set_authority(ctx: Context<MetadataSetAuthority>, new_authority: Pubkey) -> Result<()> {
+        instructions::metadata_set_authority_handler(ctx, new_authority)
+    }
+
+    pub fn metadata_withdraw(ctx: Context<MetadataWithdraw>, amount: u64) -> Result<()> {
+        instructions::metadata_withdraw_handler(ctx, amount)
+    }
 
     pub fn game_init(ctx: Context<GameInit>, nonce: u32, rows: u8, cols: u8, connect: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
         instructions::game_init_handler(ctx, nonce, rows, cols, connect, min_players, max_players, wager)

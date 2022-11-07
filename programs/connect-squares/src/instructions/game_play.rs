@@ -3,7 +3,8 @@ use anchor_lang::prelude::*;
 use crate::{
     state::{
         game::*,
-        Pot,
+        Pot, 
+        Metadata,
     },
     errors::GameError,
     utils::transfer_owned_sol,
@@ -21,15 +22,15 @@ pub fn game_play_handler(ctx: Context<GamePlay>, tile: Tile) -> Result<()> {
 
         //transfer pot to winner
         let pot = &mut ctx.accounts.pot.to_account_info();
-        //let winnings = game.get_wager() * game.get_player_count() as u32;
+        let winnings = game.get_wager() as u64 * game.get_player_count() as u64;
         transfer_owned_sol(pot,
             &mut player.to_account_info(),
-            pot.lamports())?;
+            winnings)?;
 
-        //transfer remainder(rent) back to the creator 
+        transfer_owned_sol(pot, &mut ctx.accounts.metadata.to_account_info(), pot.lamports())
+    } else {
+        Ok(())
     }
-
-    Ok(())
 }
 
 
@@ -52,6 +53,14 @@ pub struct GamePlay<'info> {
 
     #[account(mut)]
     pub player: Signer<'info>,
+    
+    #[account(
+        mut,
+        seeds = [b"metadata"],
+        bump = metadata.get_bump(),
+    )]
+    pub metadata: Account<'info, Metadata>,
+
     pub system_program: Program<'info, System>,
 }
 
