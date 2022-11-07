@@ -10,7 +10,7 @@ pub mod errors;
 pub mod utils;
 
 
-declare_id!("9ZSV8zYqPgsv4NXeJLN1x74wpR6LNVdFGgwnmAXH8TM9");
+declare_id!("ZG3VZPMEpziUq1RvcMJUbHr2dfWjHhWRjGHbgdg1LTR");
 
 #[program]
 pub mod connect_squares {

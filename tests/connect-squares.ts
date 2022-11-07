@@ -373,8 +373,9 @@ describe('connect-squares', () => {
       wager,
     });
   
-    let game = await program.account.game.fetch(gamePda);
+    let game = await program.account.game.fetch(gamePda);    
     expect(game.bump).to.equal(gamePdaBump);
+    expect(game.version).to.be.greaterThanOrEqual(0);
     expect(game.moves).to.equal(0);
     expect(game.rows).to.equal(rows);
     expect(game.cols).to.equal(cols);

@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use crate::errors::GameError;
 
 const PLAYER_TURN_MAX_SLOTS: u8 = 240;
+const VERSION: u8 = 0;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Copy)]
 pub enum GameState {
@@ -21,6 +22,7 @@ pub struct Tile {
 #[account]
 pub struct Game {
     bump: u8, //1;
+    version: u8, //1;
     creator: Pubkey, //32;
     nonce: u32, //4;
     state: GameState, //1+32
@@ -41,7 +43,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub const SIZE: usize = 1 + 32 + 4 + (1+32) + 1 + 1 + 1 + 1 + 1 + 1 + 4 + 32 + 8 + 8 + 1;
+    pub const SIZE: usize = 1 + 1 + 32 + 4 + (1+32) + 1 + 1 + 1 + 1 + 1 + 1 + 4 + 32 + 8 + 8 + 1 + 1;
 
     pub fn init(&mut self, bump: u8, creator: Pubkey, nonce: u32, pot:Pubkey, rows: u8, cols: u8, connect: u8, min_players: u8, max_players: u8, wager: u32) -> Result<()> {
         require!(rows > 2, GameError::RowsMustBeGreaterThanTwo);
@@ -54,6 +56,7 @@ impl Game {
         require!(connect <= cols, GameError::ConnectIsGreaterThanNumberOfColumns);
 
         self.bump = bump;
+        self.version = VERSION;
         self.creator = creator;
         self.nonce = nonce;
         self.state = GameState::Waiting;
